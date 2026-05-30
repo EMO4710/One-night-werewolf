@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Night Werewolf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--moon:#c9a84c;--moon-dim:#7a6230;--bg:#0a0a12;--bg2:#12121e;--bg3:#1a1a2e;--border:#2a2a44;--text:#e8e0d0;--text2:#a09880;--danger:#c0392b;--safe:#2e7d52;--rad:12px;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',serif;min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.role-name,.phase-title{font-family:'Cinzel',serif}
+#app{display:flex;flex-direction:column;min-height:100vh}
+.screen{display:none;flex-direction:column;align-items:center;padding:2rem 1rem;min-height:100vh;width:100%}
+.screen.active{display:flex}
+.title-block{text-align:center;margin-bottom:2rem}
+.title-block h1{font-size:2rem;color:var(--moon);letter-spacing:2px}
+.title-block p{color:var(--text2);font-size:1.1rem;font-style:italic;margin-top:.5rem}
+.moon-deco{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--moon),var(--moon-dim));margin:0 auto 1.5rem}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:1.25rem}
+.card+.card{margin-top:1rem}
+.card h3{font-size:1rem;color:var(--moon);margin-bottom:1rem;letter-spacing:1px}
+.player-row{display:flex;gap:.5rem;margin-bottom:.75rem}
+.player-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--text);font-family:'Crimson Pro',serif;font-size:1rem}
+.player-row input::placeholder{color:var(--text2)}
+.player-row input:focus{outline:none;border-color:var(--moon-dim)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.6rem 1.2rem;border-radius:8px;border:none;cursor:pointer;font-family:'Crimson Pro',serif;font-size:1rem;transition:all .15s}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--moon-dim);color:var(--text)}
+.btn-primary{background:var(--moon-dim);color:#fff;border:1px solid var(--moon)}
+.btn-primary:hover{background:var(--moon)}
+.btn-danger{background:var(--danger);color:#fff;border:none}
+.btn-heal{background:rgba(46,125,82,0.25);color:#6bffaa;border:1px solid var(--safe)}
+.btn-heal:hover{background:rgba(46,125,82,0.4)}
+.btn-poison{background:rgba(100,30,120,0.3);color:#cc88ff;border:1px solid #6b3aaa}
+.btn-poison:hover{background:rgba(100,30,120,0.5)}
+.btn-full{width:100%;margin-top:.75rem}
+.btn-sm{padding:.4rem .8rem;font-size:.9rem}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.5rem;margin-top:.5rem}
+.role-toggle{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;cursor:pointer;text-align:center;transition:all .15s}
+.role-toggle.selected{border-color:var(--moon);background:rgba(201,168,76,0.08)}
+.role-toggle .rname{font-size:.72rem;font-family:'Cinzel',serif;letter-spacing:.5px;display:block;color:var(--text)}
+.role-toggle .rcnt{font-size:.68rem;color:var(--text2);margin-top:.15rem}
+.role-toggle .rico{font-size:1.3rem;margin-bottom:.2rem}
+.count-info{font-size:.85rem;color:var(--text2);text-align:center;margin-top:.75rem;font-style:italic}
+.count-ok{color:var(--safe)}.count-err{color:var(--danger)}
+.phase-title{font-size:1.5rem;color:var(--moon);letter-spacing:2px;text-align:center}
+.phase-sub{color:var(--text2);font-style:italic;text-align:center;margin:.5rem 0 1.5rem;font-size:1.05rem}
+.night-order{width:100%;max-width:420px}
+.night-step{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:.75rem;opacity:.4;transition:all .3s}
+.night-step.current{opacity:1;border-color:var(--moon)}
+.night-step.done{opacity:.2}
+.night-step-name{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;color:var(--moon)}
+.night-step-desc{font-size:.95rem;color:var(--text2);margin-top:.3rem;font-style:italic}
+.reveal-wrap{width:100%;max-width:380px;text-align:center}
+.name-badge{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--moon);margin-bottom:.3rem}
+.tap-hint{color:var(--text2);font-style:italic;font-size:.95rem;margin-bottom:1.5rem}
+.role-card{background:var(--bg2);border:2px solid var(--border);border-radius:16px;padding:2rem;cursor:pointer;transition:all .2s;user-select:none}
+.role-card.flipped{border-color:var(--moon)}
+.role-card-back{display:none}
+.role-card.flipped .role-card-front{display:none}
+.role-card.flipped .role-card-back{display:block}
+.role-icon-big{font-size:3.5rem;margin-bottom:.75rem}
+.role-title{font-family:'Cinzel',serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:.75rem}
+.role-desc{color:var(--text2);font-size:1rem;line-height:1.6;font-style:italic}
+.role-team{display:inline-block;padding:.3rem .8rem;border-radius:6px;font-size:.8rem;font-family:'Cinzel',serif;letter-spacing:1px;margin-top:.75rem}
+.team-evil{background:rgba(139,26,26,0.3);color:#ff6b6b;border:1px solid #8b1a1a}
+.team-good{background:rgba(46,125,82,0.3);color:#6bffaa;border:1px solid #2e7d52}
+.team-neutral{background:rgba(74,42,122,0.3);color:#b06bff;border:1px solid #4a2a7a}
+.team-lovers{background:rgba(180,60,120,0.3);color:#ff88cc;border:1px solid #aa3366}
+.card-mystery{background:var(--bg3);padding:3rem 2rem}
+.card-mystery p{color:var(--text2);font-style:italic;font-size:1.1rem}
+.card-mystery .micon{font-size:3rem;color:var(--moon-dim);margin-bottom:1rem}
+.timer-ring{position:relative;width:140px;height:140px;margin:0 auto 1.5rem}
+.timer-ring svg{transform:rotate(-90deg)}
+.timer-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.timer-text .t-num{font-family:'Cinzel',serif;font-size:2rem;color:var(--moon)}
+.timer-text .t-label{font-size:.75rem;color:var(--text2);letter-spacing:1px}
+.players-list{width:100%;max-width:420px}
+.vote-btn{background:rgba(192,57,43,0.15);border:1px solid rgba(192,57,43,0.3);color:#ff6b6b;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.8rem;transition:all .15s}
+.vote-btn:hover{background:rgba(192,57,43,0.3)}
+.vote-btn.active{background:var(--danger);color:#fff;border-color:var(--danger)}
+.result-banner{font-family:'Cinzel',serif;font-size:2rem;letter-spacing:3px;text-align:center;padding:1rem;border-radius:var(--rad);margin-bottom:1.5rem}
+.result-evil-wins{background:rgba(139,26,26,0.2);border:2px solid #8b1a1a;color:#ff4444}
+.result-good-wins{background:rgba(46,125,82,0.2);border:2px solid var(--safe);color:#44ff88}
+.result-tie{background:rgba(74,42,122,0.2);border:2px solid #6b3aaa;color:#bb88ff}
+.result-lovers{background:rgba(180,60,120,0.2);border:2px solid #aa3366;color:#ff88cc}
+.result-table{width:100%;border-collapse:collapse;font-size:.9rem}
+.result-table th{color:var(--moon);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:1px;padding:.5rem .6rem;border-bottom:1px solid var(--border);text-align:left;font-weight:400}
+.result-table td{padding:.55rem .6rem;border-bottom:1px solid var(--border)}
+.result-table tr.was-killed td{background:rgba(192,57,43,0.08);color:#ff6b6b}
+.w100{width:100%;max-width:480px}
+.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.4}
+.star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) var(--del,0s) infinite}
+@keyframes twinkle{0%,100%{opacity:.1}50%{opacity:1}}
+#app>*{position:relative;z-index:1}
+.mt1{margin-top:1rem}.mb1{margin-bottom:1rem}
+.info-box{background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:1rem 1.25rem;font-size:.95rem;color:var(--text2);font-style:italic;line-height:1.6;width:100%;max-width:420px}
+.fade-in{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.lovers-badge{display:inline-block;background:rgba(180,60,120,0.25);border:1px solid #aa3366;color:#ff88cc;padding:.2rem .6rem;border-radius:6px;font-size:.78rem;font-family:'Cinzel',serif;letter-spacing:.5px;margin-left:.4rem}
+.action-btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem}
+.potion-panel{border-radius:10px;padding:1rem;margin-bottom:.75rem}
+.potion-heal{background:rgba(46,125,82,0.08);border:1px solid rgba(46,125,82,0.3)}
+.potion-poison{background:rgba(100,30,120,0.08);border:1px solid rgba(100,30,120,0.3)}
+.potion-title{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:1px;margin-bottom:.4rem}
+.potion-title.heal{color:#6bffaa}
+.potion-title.poison{color:#cc88ff}
+.potion-desc{font-size:.88rem;color:var(--text2);font-style:italic;margin-bottom:.65rem;line-height:1.5}
+.used-badge{display:inline-block;background:rgba(80,80,80,0.3);border:1px solid #444;color:#777;padding:.2rem .7rem;border-radius:6px;font-size:.78rem;font-family:'Cinzel',serif;letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div id="app">
+
+<!-- SETUP -->
+<div class="screen active fade-in" id="screen-setup">
+  <div class="moon-deco"></div>
+  <div class="title-block">
+    <h1>ONE NIGHT WEREWOLF</h1>
+    <p>One device · one village · one night</p>
+  </div>
+  <div class="card w100">
+    <h3>PLAYERS</h3>
+    <div id="player-inputs"></div>
+    <div style="display:flex;gap:.5rem;margin-top:.5rem">
+      <button class="btn btn-ghost btn-sm" onclick="addPlayer()"><i class="ti ti-plus"></i> Add</button>
+      <button class="btn btn-ghost btn-sm" onclick="removePlayer()"><i class="ti ti-minus"></i> Remove</button>
+    </div>
+  </div>
+  <div class="card w100 mt1">
+    <h3>ROLES</h3>
+    <div class="role-grid" id="role-grid"></div>
+    <div class="count-info" id="count-info"></div>
+  </div>
+  <div style="width:100%;max-width:480px">
+    <button class="btn btn-primary btn-full" onclick="startGame()"><i class="ti ti-moon"></i> Begin the Night</button>
+  </div>
+</div>
+
+<!-- NIGHT ORDER -->
+<div class="screen" id="screen-night">
+  <div style="text-align:center;margin-bottom:1.5rem">
+    <div class="moon-deco" style="width:60px;height:60px;margin:0 auto 1rem"></div>
+    <div class="phase-title">THE NIGHT</div>
+    <div class="phase-sub">Pass the device as instructed</div>
+  </div>
+  <div class="night-order" id="night-order"></div>
+  <button class="btn btn-primary btn-full mt1" style="max-width:420px" onclick="nightBegin()">▶ Start — Everyone close your eyes</button>
+</div>
+
+<!-- ROLE REVEAL -->
+<div class="screen" id="screen-reveal">
+  <div class="reveal-wrap fade-in">
+    <div class="name-badge" id="reveal-name"></div>
+    <div class="tap-hint">Pass the device to this player. Tap the card to see your role.</div>
+    <div class="role-card" id="role-card" onclick="flipCard()">
+      <div class="role-card-front card-mystery">
+        <div class="micon"><i class="ti ti-eye-off"></i></div>
+        <p>Tap to reveal your role</p>
+      </div>
+      <div class="role-card-back" id="role-card-back"></div>
+    </div>
+    <div id="reveal-info" style="display:none;margin-top:1rem" class="info-box"></div>
+    <button class="btn btn-primary btn-full mt1" id="reveal-done-btn" style="display:none" onclick="revealNext()">Done — cover screen &amp; pass back</button>
+  </div>
+</div>
+
+<!-- NIGHT ACTION -->
+<div class="screen" id="screen-action">
+  <div style="text-align:center;margin-bottom:1rem">
+    <div class="moon-deco" style="width:50px;height:50px;margin:0 auto .75rem"></div>
+    <div class="phase-title" id="action-title"></div>
+    <div class="phase-sub" id="action-sub"></div>
+  </div>
+  <div class="info-box" id="action-info" style="margin-bottom:1rem"></div>
+  <div id="action-controls" style="width:100%;max-width:420px"></div>
+  <button class="btn btn-primary btn-full mt1" style="max-width:420px" id="action-next-btn" onclick="actionNext()">Continue</button>
+</div>
+
+<!-- DISCUSSION -->
+<div class="screen" id="screen-discussion">
+  <div class="phase-title">DAWN BREAKS</div>
+  <div class="phase-sub">Discuss, debate, and decide who to eliminate</div>
+  <div class="timer-ring">
+    <svg width="140" height="140" viewBox="0 0 140 140">
+      <circle cx="70" cy="70" r="60" fill="none" stroke="#2a2a44" stroke-width="8"/>
+      <circle cx="70" cy="70" r="60" fill="none" stroke="#c9a84c" stroke-width="8" stroke-linecap="round"
+        stroke-dasharray="377" stroke-dashoffset="0" id="timer-arc"/>
+    </svg>
+    <div class="timer-text">
+      <div class="t-num" id="timer-num">5:00</div>
+      <div class="t-label">REMAINING</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:.5rem;margin-bottom:1.5rem">
+    <button class="btn btn-ghost btn-sm" id="timer-toggle" onclick="toggleTimer()"><i class="ti ti-player-play"></i> Start</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetTimer()"><i class="ti ti-refresh"></i> Reset</button>
+    <button class="btn btn-ghost btn-sm" onclick="addTime()"><i class="ti ti-plus"></i> +1 min</button>
+  </div>
+  <div id="lovers-notice" style="display:none;margin-bottom:1rem" class="info-box"></div>
+  <div class="players-list" id="vote-list"></div>
+  <button class="btn btn-danger btn-full mt1" style="max-width:420px" onclick="goToResults()"><i class="ti ti-sword"></i> Execute Vote</button>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="screen-results">
+  <div class="phase-title mb1">DAWN VERDICT</div>
+  <div class="result-banner w100" id="result-banner"></div>
+  <div class="card w100">
+    <h3>ALL ROLES REVEALED</h3>
+    <table class="result-table" id="result-table"></table>
+  </div>
+  <div class="card w100 mt1" id="center-cards-reveal"></div>
+  <div class="card w100 mt1" id="lovers-reveal" style="display:none"></div>
+  <div class="card w100 mt1" id="witch-reveal" style="display:none"></div>
+  <button class="btn btn-primary btn-full mt1" style="max-width:480px" onclick="newGame()"><i class="ti ti-refresh"></i> Play Again</button>
+</div>
+
+</div>
+<script>
+// Stars background
+const starsEl=document.getElementById('stars');
+for(let i=0;i<60;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.setProperty('--d',2+Math.random()*4+'s');s.style.setProperty('--del',Math.random()*4+'s');starsEl.appendChild(s);}
+
+const ROLES={
+  werewolf:{name:'Werewolf',icon:'🐺',team:'evil',desc:'You are a Werewolf. Stay hidden and avoid elimination.',night:'Werewolves, open your eyes and look for fellow werewolves.',action:'werewolf',count:2},
+  seer:{name:'Seer',icon:'🔮',team:'good',desc:'You may look at one player\'s card, or two center cards.',night:'Seer, open your eyes.',action:'seer',count:1},
+  robber:{name:'Robber',icon:'🦹',team:'good',desc:'You may swap your card with another player and see your new role.',night:'Robber, open your eyes.',action:'robber',count:1},
+  troublemaker:{name:'Troublemaker',icon:'😈',team:'good',desc:'You may swap the cards of two other players without looking at them.',night:'Troublemaker, open your eyes.',action:'troublemaker',count:1},
+  drunk:{name:'Drunk',icon:'🍺',team:'good',desc:'You must swap your card with a center card, but you don\'t see your new role.',night:'Drunk, open your eyes.',action:'drunk',count:1},
+  insomniac:{name:'Insomniac',icon:'👁',team:'good',desc:'You wake last and look at your own card to see if it changed.',night:'Insomniac, open your eyes.',action:'insomniac',count:1},
+  minion:{name:'Minion',icon:'🧟',team:'evil',desc:'You are on the werewolf team and see who the werewolves are.',night:'Minion, open your eyes.',action:'minion',count:1},
+  mason:{name:'Mason',icon:'🔑',team:'good',desc:'Masons recognize each other and are always on the village team.',night:'Masons, open your eyes.',action:null,count:2},
+  hunter:{name:'Hunter',icon:'🏹',team:'good',desc:'If eliminated, the player you voted for is also eliminated.',night:null,action:null,count:1},
+  tanner:{name:'Tanner',icon:'🎭',team:'neutral',desc:'You win ONLY if you are eliminated.',night:null,action:null,count:1},
+  villager:{name:'Villager',icon:'🧑‍🌾',team:'good',desc:'No special power. Find and eliminate the werewolves.',night:null,action:null,count:3},
+  cupid:{name:'Cupid',icon:'💘',team:'good',desc:'You secretly link two players as Lovers. If one dies, the other dies too.',night:'Cupid, open your eyes.',action:'cupid',count:1},
+  fortuneteller:{name:'Fortune Teller',icon:'🌙',team:'good',desc:'Look at one player\'s card — you learn only if they are a Werewolf (yes/no).',night:'Fortune Teller, open your eyes.',action:'fortuneteller',count:1},
+  littlegirl:{name:'Little Girl',icon:'👧',team:'good',desc:'You may secretly peek during any night phase. If caught by a Werewolf, you lose.',night:'Little Girl, you may secretly peek during any phase.',action:'littlegirl',count:1},
+  witch:{name:'Witch',icon:'🧙',team:'good',desc:'You have two potions — Heal to protect the Werewolves\' target, or Poison to eliminate any player at dawn. Use only one.',night:'Witch, open your eyes.',action:'witch',count:1},
+};
+
+const NIGHT_ORDER=['cupid','littlegirl','werewolf','minion','mason','fortuneteller','seer','robber','troublemaker','witch','drunk','insomniac'];
+
+let players=[],selectedRoles={},assignedRoles={},centerCards=[],originalRoles={};
+let nightRoleIndex=0,revealQueue=[],revealIndex=0,nightSteps=[];
+let votes={},timerInterval=null,timerSecs=300,totalTimerSecs=300,timerRunning=false;
+let eliminated=[],lovers=[],witchHealTarget=null,witchPoisonTarget=null,werewolfTarget=null,actionNextFn=null;
+
+function initSetup(){
+  players=['','','','',''];
+  selectedRoles={werewolf:2,villager:1,seer:1,robber:1};
+  renderPlayerInputs();renderRoleGrid();updateCount();
+}
+
+function renderPlayerInputs(){
+  const c=document.getElementById('player-inputs');c.innerHTML='';
+  players.forEach((p,i)=>{
+    const row=document.createElement('div');row.className='player-row';
+    row.innerHTML=`<input type="text" placeholder="Player ${i+1}" value="${p}" oninput="players[${i}]=this.value">`;
+    c.appendChild(row);
+  });
+}
+
+function addPlayer(){if(players.length<10){players.push('');renderPlayerInputs();updateCount();}}
+function removePlayer(){if(players.length>3){players.pop();renderPlayerInputs();updateCount();}}
+
+function renderRoleGrid(){
+  const g=document.getElementById('role-grid');g.innerHTML='';
+  Object.entries(ROLES).forEach(([key,r])=>{
+    const sel=selectedRoles[key]||0;
+    const el=document.createElement('div');
+    el.className='role-toggle'+(sel>0?' selected':'');el.id='rt-'+key;el.onclick=()=>toggleRole(key);
+    el.innerHTML=`<div class="rico">${r.icon}</div><div class="rname">${r.name}</div><div class="rcnt">${sel}/${r.count}</div>`;
+    g.appendChild(el);
+  });
+}
+
+function toggleRole(key){
+  const max=ROLES[key].count;let cur=selectedRoles[key]||0;
+  cur=(cur+1)%(max+1);
+  if(cur===0)delete selectedRoles[key];else selectedRoles[key]=cur;
+  const el=document.getElementById('rt-'+key);
+  el.className='role-toggle'+(cur>0?' selected':'');
+  el.querySelector('.rcnt').textContent=cur+'/'+max;
+  updateCount();
+}
+
+function countSelected(){return Object.values(selectedRoles).reduce((a,b)=>a+b,0);}
+
+function updateCount(){
+  const need=players.length+3,sel=countSelected();
+  const el=document.getElementById('count-info');
+  if(sel===need)el.innerHTML=`<span class="count-ok">✓ ${sel} roles for ${players.length} players</span>`;
+  else el.innerHTML=`<span class="count-err">Need ${need} roles (${players.length}+3). Have: ${sel}</span>`;
+}
+
+function startGame(){
+  const pnames=players.map((p,i)=>p.trim()||'Player '+(i+1));players=pnames;
+  if(countSelected()!==players.length+3){alert('Need exactly '+(players.length+3)+' roles.');return;}
+  let deck=[];
+  Object.entries(selectedRoles).forEach(([k,c])=>{for(let i=0;i<c;i++)deck.push(k);});
+  for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+  assignedRoles={};players.forEach((p,i)=>{assignedRoles[p]=deck[i];});
+  centerCards=deck.slice(players.length);originalRoles={...assignedRoles};
+  lovers=[];witchHealTarget=null;witchPoisonTarget=null;werewolfTarget=null;votes={};eliminated=[];nightRoleIndex=0;
+  buildNight();showScreen('screen-night');
+}
+
+function buildNight(){
+  const all=[...Object.values(assignedRoles),...centerCards];
+  nightSteps=NIGHT_ORDER.filter(r=>all.includes(r));
+  const c=document.getElementById('night-order');c.innerHTML='';
+  nightSteps.forEach((role,i)=>{
+    const r=ROLES[role];const div=document.createElement('div');div.className='night-step';div.id='ns-'+i;
+    div.innerHTML=`<div class="night-step-name">${r.icon} ${r.name.toUpperCase()}</div><div class="night-step-desc">${r.night||'No night action.'}</div>`;
+    c.appendChild(div);
+  });
+}
+
+function nightBegin(){doNightStep();}
+
+function doNightStep(){
+  if(nightRoleIndex>=nightSteps.length){showScreen('screen-discussion');initVoting();initTimer();return;}
+  const role=nightSteps[nightRoleIndex];
+  document.querySelectorAll('.night-step').forEach((el,i)=>{
+    el.className='night-step'+(i===nightRoleIndex?' current':i<nightRoleIndex?' done':'');
+  });
+  const having=players.filter(p=>assignedRoles[p]===role);
+  if(having.length===0){showNightAction(role,[]);return;}
+  revealQueue=having;revealIndex=0;doNextReveal(role);
+}
+
+function doNextReveal(role){
+  if(revealIndex>=revealQueue.length){showNightAction(role,revealQueue);return;}
+  const pname=revealQueue[revealIndex];showScreen('screen-reveal');
+  document.getElementById('reveal-name').textContent=pname;
+  document.getElementById('reveal-info').style.display='none';
+  document.getElementById('reveal-done-btn').style.display='none';
+  const card=document.getElementById('role-card');card.className='role-card';
+  card.querySelector('.role-card-front').style.display='';
+  card.querySelector('.role-card-back').style.display='none';
+  const r=ROLES[role];
+  document.getElementById('role-card-back').innerHTML=`
+    <div class="role-icon-big">${r.icon}</div>
+    <div class="role-title">${r.name.toUpperCase()}</div>
+    <div class="role-desc">${r.desc}</div>
+    <div class="role-team team-${r.team}">${r.team.toUpperCase()} TEAM</div>
+    ${lovers.includes(pname)?'<div class="role-team team-lovers" style="margin-top:.4rem">💘 LOVER</div>':''}
+  `;
+}
+
+function flipCard(){
+  const card=document.getElementById('role-card');if(card.classList.contains('flipped'))return;
+  card.classList.add('flipped');
+  card.querySelector('.role-card-front').style.display='none';
+  card.querySelector('.role-card-back').style.display='block';
+  const r=ROLES[nightSteps[nightRoleIndex]];
+  if(r.night){const info=document.getElementById('reveal-info');info.textContent=r.night;info.style.display='block';}
+  document.getElementById('reveal-done-btn').style.display='flex';
+}
+
+function revealNext(){
+  revealIndex++;
+  const card=document.getElementById('role-card');card.classList.remove('flipped');
+  card.querySelector('.role-card-front').style.display='';
+  card.querySelector('.role-card-back').style.display='none';
+  doNextReveal(nightSteps[nightRoleIndex]);
+}
+
+function showNightAction(role,having){
+  showScreen('screen-action');const r=ROLES[role];
+  document.getElementById('action-title').textContent=r.name.toUpperCase();
+  document.getElementById('action-sub').textContent=r.night||'No night action.';
+  const ctrl=document.getElementById('action-controls');ctrl.innerHTML='';
+  const info=document.getElementById('action-info');
+  actionNextFn=()=>{nightRoleIndex++;doNightStep();};
+  document.getElementById('action-next-btn').onclick=()=>{if(actionNextFn)actionNextFn();};
+  if(!r.action||having.length===0){
+    info.textContent=having.length===0?`No player has the ${r.name} role — it may be in the center. All keep eyes closed.`:`${r.name} has no special night action.`;
+    return;
+  }
+  switch(r.action){
+    case 'werewolf':buildWerewolfAction(ctrl,info,having);break;
+    case 'cupid':buildCupid(ctrl,info,having);break;
+    case 'fortuneteller':buildFT(ctrl,info,having);break;
+    case 'littlegirl':buildLG(ctrl,info,having);break;
+    case 'witch':buildWitch(ctrl,info,having);break;
+    case 'seer':buildSeer(ctrl,info,having);break;
+    case 'robber':buildRobber(ctrl,info,having);break;
+    case 'troublemaker':buildTM(ctrl,info,having);break;
+    case 'drunk':buildDrunk(ctrl,info,having);break;
+    case 'insomniac':buildInsomniac(ctrl,info,having);break;
+    case 'minion':buildMinion(ctrl,info,having);break;
+  }
+}
+
+function actionNext(){if(actionNextFn)actionNextFn();}
+
+function buildWerewolfAction(ctrl,info,having){
+  info.textContent='Werewolves: choose a player to target tonight. The Witch may later save or override this.';
+  ctrl.innerHTML=`<div style="color:var(--text2);font-size:.88rem;font-style:italic;margin-bottom:.5rem">Choose your target (or skip):</div>
+  <div class="action-btn-grid">${players.filter(p=>!having.includes(p)).map(p=>`<button class="btn btn-ghost" id="wt-${p.replace(/\s/g,'_')}" onclick="setWolfTarget('${p}')">${p}</button>`).join('')}
+  <button class="btn btn-ghost" onclick="setWolfTarget(null)">No target</button></div>
+  <div id="wt-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.setWolfTarget=(p)=>{
+    werewolfTarget=p;
+    document.querySelectorAll('[id^="wt-"]').forEach(b=>{if(b.tagName==='BUTTON')b.className='btn btn-ghost';});
+    if(p){const el=document.getElementById('wt-'+p.replace(/\s/g,'_'));if(el)el.className='btn btn-primary';}
+    const r=document.getElementById('wt-res');r.style.display='block';
+    r.textContent=p?`Target locked: ${p}. Only the Witch can save them.`:'No target chosen.';
+  };
+}
+
+function buildWitch(ctrl,info,having){
+  const wn=having[0];
+  const targetText=werewolfTarget?`The Werewolves targeted: ${werewolfTarget}`:'The Werewolves chose no target tonight.';
+  info.textContent=`${wn}: ${targetText}. You have two potions — use one or neither.`;
+  ctrl.innerHTML=`
+  <div class="potion-panel potion-heal">
+    <div class="potion-title heal">🌿 Heal Potion</div>
+    <div class="potion-desc">${werewolfTarget?`Protect ${werewolfTarget} from being eliminated by the Werewolves tonight.`:'No target to heal — the Werewolves chose no one.'}</div>
+    ${werewolfTarget?`<button class="btn btn-heal" id="heal-btn" onclick="witchHeal('${werewolfTarget}')">Heal ${werewolfTarget}</button>`:`<span class="used-badge">Unavailable</span>`}
+  </div>
+  <div class="potion-panel potion-poison">
+    <div class="potion-title poison">☠ Poison Potion</div>
+    <div class="potion-desc">Condemn any player to die at dawn, regardless of votes.</div>
+    <div class="action-btn-grid" style="margin-top:.25rem">${players.filter(p=>p!==wn).map(p=>`<button class="btn btn-ghost btn-sm" id="poison-${p.replace(/\s/g,'_')}" onclick="witchPoison('${p}')">${p}</button>`).join('')}</div>
+  </div>
+  <button class="btn btn-ghost" style="width:100%;margin-top:.5rem" onclick="witchSkip()">Use neither potion</button>
+  <div id="witch-action-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.witchHeal=(target)=>{witchHealTarget=target;witchPoisonTarget=null;disableWitchBtns();document.getElementById('witch-action-res').style.display='block';document.getElementById('witch-action-res').textContent=`🌿 Heal used. ${target} is protected from the Werewolf attack tonight.`;};
+  window.witchPoison=(target)=>{witchPoisonTarget=target;witchHealTarget=null;disableWitchBtns();document.getElementById('witch-action-res').style.display='block';document.getElementById('witch-action-res').textContent=`☠ Poison used. ${target} will die at dawn.`;};
+  window.witchSkip=()=>{witchHealTarget=null;witchPoisonTarget=null;disableWitchBtns();document.getElementById('witch-action-res').style.display='block';document.getElementById('witch-action-res').textContent='The Witch chose to use neither potion.';};
+}
+
+function disableWitchBtns(){
+  const hb=document.getElementById('heal-btn');if(hb)hb.disabled=true;
+  players.forEach(p=>{const el=document.getElementById('poison-'+p.replace(/\s/g,'_'));if(el)el.disabled=true;});
+  const skip=document.querySelector('[onclick="witchSkip()"]');if(skip)skip.disabled=true;
+}
+
+function buildCupid(ctrl,info,having){
+  const cn=having[0];info.textContent=`${cn}: Secretly choose two players to be Lovers. If one is eliminated, both are eliminated.`;
+  let sel=[];
+  ctrl.innerHTML=`<div style="color:var(--text2);font-size:.88rem;font-style:italic;margin-bottom:.5rem">Select exactly 2 players:</div>
+  <div class="action-btn-grid">${players.map(p=>`<button class="btn btn-ghost" id="cupid-${p.replace(/\s/g,'_')}" onclick="cupidSel('${p}')">${p}</button>`).join('')}</div>
+  <div id="cupid-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.cupidSel=(p)=>{
+    const id='cupid-'+p.replace(/\s/g,'_');
+    if(sel.includes(p)){sel=sel.filter(x=>x!==p);document.getElementById(id).className='btn btn-ghost';}
+    else if(sel.length<2){sel.push(p);document.getElementById(id).className='btn btn-primary';}
+    if(sel.length===2){lovers=[...sel];const r=document.getElementById('cupid-res');r.style.display='block';r.textContent=`💘 ${sel[0]} and ${sel[1]} are now Lovers.`;}
+  };
+}
+
+function buildFT(ctrl,info,having){
+  const fn=having[0];info.textContent=`${fn}: Pick one player — you learn only if they are a Werewolf (yes/no).`;
+  ctrl.innerHTML=`<div class="action-btn-grid">${players.filter(p=>p!==fn).map(p=>`<button class="btn btn-ghost" onclick="ftPeek('${p}')">${p}</button>`).join('')}</div>
+  <div id="ft-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.ftPeek=(p)=>{const isW=assignedRoles[p]==='werewolf';const r=document.getElementById('ft-res');r.style.display='block';r.textContent=`${p} ${isW?'🐺 IS a Werewolf!':'✓ is NOT a Werewolf.'}`; };
+}
+
+function buildLG(ctrl,info,having){
+  info.textContent='During any night phase the Little Girl may secretly open her eyes to peek. If a Werewolf catches her looking, she is eliminated instead.';
+  ctrl.innerHTML=`<div class="info-box" style="margin-top:.4rem;border-color:rgba(139,26,26,0.4);color:#ff9977">⚠ Narrator: Watch if the Little Girl peeks during the Werewolf phase. If a Werewolf notices her, she loses instead.</div>`;
+}
+
+function buildSeer(ctrl,info,having){
+  const sn=having[0];info.textContent=`${sn}: Look at one player's card, OR two center cards.`;
+  let cp=0;
+  ctrl.innerHTML=`<div style="color:var(--text2);font-size:.88rem;font-style:italic;margin-bottom:.4rem">Peek at a player:</div>
+  <div class="action-btn-grid">${players.filter(p=>p!==sn).map(p=>`<button class="btn btn-ghost" onclick="seerP('${p}')">${p}</button>`).join('')}</div>
+  <div style="color:var(--text2);font-size:.88rem;font-style:italic;margin:.6rem 0 .3rem">Or peek at 2 center cards:</div>
+  <div style="display:flex;gap:.4rem">${[0,1,2].map(i=>`<button class="btn btn-ghost btn-sm" onclick="seerC(${i})">Center ${i+1}</button>`).join('')}</div>
+  <div id="seer-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.seerP=(p)=>{const r=assignedRoles[p];document.getElementById('seer-res').style.display='block';document.getElementById('seer-res').textContent=`${p}: ${ROLES[r].icon} ${ROLES[r].name}`;};
+  window.seerC=(i)=>{cp++;if(cp>2)return;const r=centerCards[i];const el=document.getElementById('seer-res');el.style.display='block';el.textContent=(el.textContent?el.textContent+' | ':'')+`Center ${i+1}: ${ROLES[r].icon} ${ROLES[r].name}`;};
+}
+
+function buildRobber(ctrl,info,having){
+  const rn=having[0];info.textContent=`${rn}: Swap your card with another player and see your new role.`;
+  ctrl.innerHTML=`<div class="action-btn-grid">${players.filter(p=>p!==rn).map(p=>`<button class="btn btn-ghost" onclick="robSwap('${rn}','${p}')">${p}</button>`).join('')}
+  <button class="btn btn-ghost" onclick="robSkip()">Skip</button></div>
+  <div id="rob-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.robSwap=(f,t)=>{const fr=assignedRoles[f],tr=assignedRoles[t];assignedRoles[f]=tr;assignedRoles[t]=fr;document.getElementById('rob-res').style.display='block';document.getElementById('rob-res').textContent=`New role: ${ROLES[tr].icon} ${ROLES[tr].name}`;};
+  window.robSkip=()=>{document.getElementById('rob-res').style.display='block';document.getElementById('rob-res').textContent='You chose not to swap.';};
+}
+
+function buildTM(ctrl,info,having){
+  const tn=having[0];info.textContent=`${tn}: Swap the cards of two other players (you don't see them).`;
+  let sel=[];
+  ctrl.innerHTML=`<div class="action-btn-grid">${players.filter(p=>p!==tn).map(p=>`<button class="btn btn-ghost" id="tm-${p.replace(/\s/g,'_')}" onclick="tmSel('${p}')">${p}</button>`).join('')}
+  <button class="btn btn-ghost" onclick="tmSkip()">Skip</button></div>
+  <div id="tm-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.tmSel=(p)=>{
+    const id='tm-'+p.replace(/\s/g,'_');
+    if(sel.includes(p)){sel=sel.filter(x=>x!==p);document.getElementById(id).className='btn btn-ghost';}
+    else if(sel.length<2){sel.push(p);document.getElementById(id).className='btn btn-primary';}
+    if(sel.length===2){const r1=assignedRoles[sel[0]],r2=assignedRoles[sel[1]];assignedRoles[sel[0]]=r2;assignedRoles[sel[1]]=r1;document.getElementById('tm-res').style.display='block';document.getElementById('tm-res').textContent=`Swapped ${sel[0]} ↔ ${sel[1]}.`;}
+  };
+  window.tmSkip=()=>{document.getElementById('tm-res').style.display='block';document.getElementById('tm-res').textContent='You chose not to swap.';};
+}
+
+function buildDrunk(ctrl,info,having){
+  const dn=having[0];info.textContent=`${dn}: You MUST swap your card with a center card. You won't see your new role!`;
+  ctrl.innerHTML=`<div style="display:flex;gap:.4rem">${[0,1,2].map(i=>`<button class="btn btn-ghost" onclick="drunkSwap('${dn}',${i})">Center ${i+1}</button>`).join('')}</div>
+  <div id="drunk-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.drunkSwap=(n,i)=>{const my=assignedRoles[n],c=centerCards[i];centerCards[i]=my;assignedRoles[n]=c;document.getElementById('drunk-res').style.display='block';document.getElementById('drunk-res').textContent=`Swapped with Center ${i+1}. You don't know your new role!`;};
+}
+
+function buildInsomniac(ctrl,info,having){
+  const n=having[0];info.textContent=`${n}: Check your card — did it change during the night?`;
+  ctrl.innerHTML=`<button class="btn btn-primary" onclick="insomCheck('${n}')">Check my card</button>
+  <div id="insom-res" style="display:none;margin-top:.75rem" class="info-box"></div>`;
+  window.insomCheck=(nm)=>{const r=assignedRoles[nm],orig=originalRoles[nm];document.getElementById('insom-res').style.display='block';document.getElementById('insom-res').textContent=`Your card: ${ROLES[r].icon} ${ROLES[r].name}`+(r!==orig?' ⚠ (changed!)':' (unchanged)');};
+}
+
+function buildMinion(ctrl,info,having){
+  const mn=having[0];info.textContent=`${mn}: You serve the werewolves. Here they are:`;
+  const wolves=players.filter(p=>assignedRoles[p]==='werewolf');
+  ctrl.innerHTML=`<div class="info-box" style="margin-top:.4rem">${wolves.length>0?wolves.map(w=>`🐺 ${w}`).join(', '):'No werewolves among players — protect yourself!'}</div>`;
+}
+
+function initVoting(){
+  votes={};players.forEach(p=>{votes[p]=null;});
+  const ln=document.getElementById('lovers-notice');
+  if(lovers.length===2){ln.style.display='block';ln.textContent=`💘 Lovers: ${lovers[0]} and ${lovers[1]}. If one is eliminated, both are.`;}
+  else ln.style.display='none';
+  renderVoteList();
+}
+
+function renderVoteList(){
+  const c=document.getElementById('vote-list');c.innerHTML='';
+  const vc={};players.forEach(p=>{vc[p]=players.filter(v=>votes[v]===p).length;});
+  const vs=document.createElement('div');
+  vs.innerHTML=`<div style="font-family:Cinzel,serif;font-size:.75rem;letter-spacing:1px;color:var(--text2);margin-bottom:.5rem">CAST YOUR VOTE</div>`;
+  players.forEach(voter=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap';
+    const lb=lovers.includes(voter)?`<span class="lovers-badge">💘</span>`:'';
+    row.innerHTML=`<span style="font-size:.85rem;color:var(--text2);min-width:90px;font-style:italic">${voter}${lb} →</span>`+
+      players.filter(p=>p!==voter).map(t=>`<button class="vote-btn${votes[voter]===t?' active':''}" onclick="castVote('${voter}','${t}')">${t}${vc[t]>0?' ('+vc[t]+')':''}</button>`).join('');
+    vs.appendChild(row);
+  });
+  c.appendChild(vs);
+}
+
+function castVote(voter,target){votes[voter]=target;renderVoteList();}
+
+function initTimer(){timerSecs=300;totalTimerSecs=300;timerRunning=false;updateTimerDisplay();document.getElementById('timer-toggle').innerHTML='<i class="ti ti-player-play"></i> Start';}
+function toggleTimer(){
+  if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timer-toggle').innerHTML='<i class="ti ti-player-play"></i> Resume';}
+  else{timerRunning=true;document.getElementById('timer-toggle').innerHTML='<i class="ti ti-player-pause"></i> Pause';
+    timerInterval=setInterval(()=>{timerSecs=Math.max(0,timerSecs-1);updateTimerDisplay();if(timerSecs===0){clearInterval(timerInterval);timerRunning=false;document.getElementById('timer-toggle').innerHTML='<i class="ti ti-player-play"></i> Resume';}},1000);}
+}
+function resetTimer(){clearInterval(timerInterval);timerRunning=false;timerSecs=totalTimerSecs;updateTimerDisplay();document.getElementById('timer-toggle').innerHTML='<i class="ti ti-player-play"></i> Start';}
+function addTime(){timerSecs+=60;totalTimerSecs+=60;updateTimerDisplay();}
+function updateTimerDisplay(){
+  const m=Math.floor(timerSecs/60),s=timerSecs%60;
+  document.getElementById('timer-num').textContent=m+':'+(s<10?'0':'')+s;
+  const pct=timerSecs/totalTimerSecs;
+  document.getElementById('timer-arc').setAttribute('stroke-dashoffset',377*(1-pct));
+  document.getElementById('timer-arc').setAttribute('stroke',timerSecs<60?'#c0392b':timerSecs<120?'#e67e22':'#c9a84c');
+}
+
+function goToResults(){
+  clearInterval(timerInterval);
+  const voteCounts={};players.forEach(p=>{voteCounts[p]=0;});
+  players.forEach(p=>{if(votes[p])voteCounts[votes[p]]=(voteCounts[votes[p]]||0)+1;});
+  const maxVotes=Math.max(...Object.values(voteCounts));
+  let elim=maxVotes>=2?players.filter(p=>voteCounts[p]===maxVotes):[];
+  if(witchHealTarget&&elim.includes(witchHealTarget))elim=elim.filter(p=>p!==witchHealTarget);
+  if(witchPoisonTarget&&!elim.includes(witchPoisonTarget))elim.push(witchPoisonTarget);
+  if(lovers.length===2){const le=lovers.filter(l=>elim.includes(l));if(le.length>0&&le.length<2){const other=lovers.find(l=>!elim.includes(l));if(other)elim.push(other);}}
+  elim.filter(p=>assignedRoles[p]==='hunter').forEach(h=>{const hv=votes[h];if(hv&&!elim.includes(hv))elim.push(hv);});
+  eliminated=elim;
+
+  const wolves=players.filter(p=>assignedRoles[p]==='werewolf');
+  const wolfElim=eliminated.some(p=>assignedRoles[p]==='werewolf');
+  const tannerElim=eliminated.some(p=>assignedRoles[p]==='tanner');
+  const loversMutual=lovers.length===2&&lovers.every(l=>eliminated.includes(l));
+
+  let result='',resultClass='';
+  if(loversMutual){result='💘 LOVERS WIN!';resultClass='result-lovers';}
+  else if(tannerElim){result='🎭 TANNER WINS!';resultClass='result-tie';}
+  else if(wolves.length===0){result=eliminated.length===0?'🌙 VILLAGE WINS!':'🐺 WEREWOLF WINS!';resultClass=eliminated.length===0?'result-good-wins':'result-evil-wins';}
+  else{result=wolfElim?'🌙 VILLAGE WINS!':'🐺 WEREWOLF WINS!';resultClass=wolfElim?'result-good-wins':'result-evil-wins';}
+
+  showScreen('screen-results');
+  document.getElementById('result-banner').textContent=result;
+  document.getElementById('result-banner').className='result-banner w100 '+resultClass;
+
+  const t=document.getElementById('result-table');
+  t.innerHTML=`<tr><th>Player</th><th>Started As</th><th>Final Role</th><th>Votes</th><th></th></tr>`;
+  players.forEach(p=>{
+    const orig=originalRoles[p],final=assignedRoles[p],vc2=voteCounts[p]||0,el=eliminated.includes(p),isL=lovers.includes(p);
+    const notes=[];
+    if(p===witchHealTarget)notes.push('🌿 healed');
+    if(p===witchPoisonTarget)notes.push('☠ poisoned');
+    const tr=document.createElement('tr');tr.className=el?'was-killed':'';
+    tr.innerHTML=`<td>${p}${isL?'<span class="lovers-badge">💘</span>':''}${notes.length?` <span style="font-size:.75rem;color:var(--text2)">(${notes.join(', ')})</span>`:''}</td><td>${ROLES[orig].icon} ${ROLES[orig].name}</td><td>${ROLES[final].icon} ${ROLES[final].name}</td><td>${vc2}</td><td>${el?'☠️':''}</td>`;
+    t.appendChild(tr);
+  });
+
+  document.getElementById('center-cards-reveal').innerHTML=`<h3>CENTER CARDS</h3><div style="display:flex;gap:.75rem;margin-top:.75rem;flex-wrap:wrap">${centerCards.map((r,i)=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;text-align:center"><div style="font-size:.68rem;color:var(--text2);font-family:Cinzel,serif;letter-spacing:1px;margin-bottom:.25rem">CENTER ${i+1}</div><div style="font-size:1.4rem">${ROLES[r].icon}</div><div style="font-size:.82rem;margin-top:.2rem">${ROLES[r].name}</div></div>`).join('')}</div>`;
+
+  if(lovers.length===2){
+    const lr=document.getElementById('lovers-reveal');lr.style.display='block';
+    lr.innerHTML=`<h3>💘 THE LOVERS</h3><p style="color:var(--text2);font-style:italic;margin-top:.5rem">${lovers[0]} and ${lovers[1]} were bound by Cupid's arrow.</p>`;
+  }
+
+  const witchInGame=players.some(p=>originalRoles[p]==='witch');
+  if(witchInGame){
+    const wr=document.getElementById('witch-reveal');wr.style.display='block';
+    const wlines=[];
+    if(werewolfTarget)wlines.push(`🐺 Werewolves targeted: ${werewolfTarget}`);else wlines.push('🐺 Werewolves chose no target.');
+    if(witchHealTarget)wlines.push(`🌿 Witch healed: ${witchHealTarget}`);
+    else if(witchPoisonTarget)wlines.push(`☠ Witch poisoned: ${witchPoisonTarget}`);
+    else wlines.push('🧙 Witch used neither potion.');
+    wr.innerHTML=`<h3>🧙 WITCH'S ACTIONS</h3>${wlines.map(l=>`<p style="color:var(--text2);font-style:italic;margin-top:.5rem">${l}</p>`).join('')}`;
+  }
+}
+
+function newGame(){
+  nightRoleIndex=0;lovers=[];witchHealTarget=null;witchPoisonTarget=null;werewolfTarget=null;
+  votes={};eliminated=[];assignedRoles={};centerCards=[];originalRoles={};
+  document.getElementById('lovers-reveal').style.display='none';
+  document.getElementById('witch-reveal').style.display='none';
+  showScreen('screen-setup');
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+initSetup();
+</script>
+</body>
+</html>
